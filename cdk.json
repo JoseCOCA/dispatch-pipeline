@@ -1,0 +1,15 @@
+{
+  "app": "npx tsx bin/dispatch-pipeline.ts",
+  "watch": {
+    "include": ["bin/**", "infra/**", "src/**"],
+    "exclude": ["node_modules/**", "cdk.out/**", "test/**", "**/*.test.ts"]
+  },
+  "context": {
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:validateSnapshotRemovalPolicy": true,
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
+    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true
+  }
+}
