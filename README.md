@@ -88,8 +88,8 @@ pnpm typecheck
 Then:
 
 ```bash
-npx cdk bootstrap                                   # once per account/region
-pnpm deploy -- -c alertEmail=you@example.com
+pnpm cdk:bootstrap                                   # once per account/region
+pnpm cdk:deploy -- -c alertEmail=you@example.com
 ```
 
 `cdk bootstrap` creates a `CDKToolkit` CloudFormation stack — an S3 staging bucket,
@@ -99,7 +99,7 @@ it persists after `cdk destroy` of this stack.
 ### Tearing down
 
 ```bash
-pnpm destroy
+pnpm cdk:destroy
 ```
 
 The receipts bucket is created with `autoDeleteObjects: true` and
