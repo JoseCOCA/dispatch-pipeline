@@ -7,7 +7,7 @@ import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions'
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { EmailSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
@@ -89,6 +89,20 @@ export class DispatchPipelineStack extends Stack {
       target: 'node22',
     }
 
+    // Log groups are declared explicitly rather than via the deprecated
+    // `logRetention` prop, which quietly provisions an extra Lambda whose only job
+    // is to call the CloudWatch API after deployment. Declaring the group directly
+    // means one less moving part and a retention policy CloudFormation can see.
+    const producerLogs = new LogGroup(this, 'ProducerLogs', {
+      retention: RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    })
+
+    const consumerLogs = new LogGroup(this, 'ConsumerLogs', {
+      retention: RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    })
+
     const producer = new NodejsFunction(this, 'Producer', {
       entry: 'src/handlers/producer.ts',
       runtime: Runtime.NODEJS_22_X,
@@ -97,7 +111,7 @@ export class DispatchPipelineStack extends Stack {
       architecture: Architecture.ARM_64,
       memorySize: 512,
       timeout: Duration.seconds(30),
-      logRetention: RetentionDays.ONE_WEEK,
+      logGroup: producerLogs,
       bundling,
       environment: {
         QUEUE_URL: deliveryQueue.queueUrl,
@@ -112,7 +126,7 @@ export class DispatchPipelineStack extends Stack {
       memorySize: 512,
       timeout: CONSUMER_TIMEOUT,
       reservedConcurrentExecutions: MAX_CONSUMER_CONCURRENCY,
-      logRetention: RetentionDays.ONE_WEEK,
+      logGroup: consumerLogs,
       bundling,
       environment: {
         RECEIPTS_BUCKET: receiptsBucket.bucketName,
